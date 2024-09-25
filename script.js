@@ -1,8 +1,11 @@
 //import './styles.css'
 
+const audio = new Audio('./Tetris.mp3');
+const audio2 = new Audio('./PouGameOver.mp3');
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
-const $score = document.querySelector('span')
+const $score = document.getElementById('score')
+const $maxScore = document.getElementById('max-score')
 const controls = document.querySelectorAll(".controls i");
 
 
@@ -17,6 +20,8 @@ canvas.height = BLOCK_SIZE * BOARD_HEIGHT
 ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
 
 let score = 0;
+let maxScore = Number(localStorage.getItem(`ScoreMax`));
+localStorage.setItem('ScoreMax',`${maxScore}`);
 
 const createBoard = (width, height) => {
     return Array(height).fill().map(() => Array(width).fill(0))
@@ -119,6 +124,7 @@ function draw() {
         })
     })
     $score.innerText = score
+    $maxScore.innerText = Number(localStorage.getItem(`ScoreMax`));
 }
 
 controls.forEach(key => {
@@ -126,7 +132,7 @@ controls.forEach(key => {
 })
 
 const changeDirection = (e) => {
-    if (e.key === 'ArrowUp') {
+    if (e.key === 'ArrowUp' || e.key === `w` ) {
         const rotated = []
         for (let i = 0; i < piece.shape[0].length; i++) {
             const row = []
@@ -141,7 +147,7 @@ const changeDirection = (e) => {
             piece.shape = previosShape
         }
     } 
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' || e.key === `s`) {
         piece.position.y ++;
         if(checkCollision()) {
             piece.position.y--;
@@ -149,19 +155,20 @@ const changeDirection = (e) => {
             removeRows();
         }
     } 
-    if (e.key === 'ArrowLeft') {
+    if (e.key === 'ArrowLeft' || e.key === `a`) {
         piece.position.x--;
         if(checkCollision()) {
             piece.position.x++;
         }
     } 
-    if (e.key === 'ArrowRight') {
+    if (e.key === 'ArrowRight' || e.key === `d`) {
         piece.position.x ++;
         if(checkCollision()) {
             piece.position.x--;
         }
     }
 }
+
 
 document.addEventListener('keydown', changeDirection)
 
@@ -188,7 +195,14 @@ function solidifyPiece(){
     piece.position.y = 0;
     piece.shape = PIECES[Math.floor(Math.random() * PIECES.length)];
     if (checkCollision()){
-        window.alert('Game over!! Sorry!!')
+        setTimeout(()=>{
+            window.alert('Game over!! Sorry!!')
+            audio.play()
+            score=0
+        },10)
+        audio.pause()
+        audio2.volume=1
+        audio2.play()
         board.forEach((row) => row.fill(0))
     }
 }
@@ -205,6 +219,10 @@ function removeRows(){
         const newRow = new Array(BOARD_WIDTH).fill(0);
         board.unshift(newRow);
         score += 10
+        if (score >= maxScore){
+            maxScore = score
+            localStorage.setItem('ScoreMax',`${maxScore}`)
+        }
     })
 }
 
@@ -213,8 +231,7 @@ const $background = document.querySelector('#background')
 
 $section.addEventListener('click', () => {
     update()
-    const audio = new Audio('./Tetris.mp3');
-    audio.volume = 0.5;
+    audio.volume = 0.8;
     audio.play();
     audio.loop = true;
     $section.remove()
